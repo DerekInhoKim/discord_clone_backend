@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     PrivateChat.belongsToMany(models.User, privateChatUserMapping)
-    PrivateChat.hasMany(models.privateChatMessage, {foreignKey: 'privateChatId'})
+    PrivateChat.hasMany(models.PrivateChatMessage, {foreignKey: 'privateChatId'})
   };
   return PrivateChat;
 };

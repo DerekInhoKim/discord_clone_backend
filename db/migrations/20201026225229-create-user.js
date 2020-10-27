@@ -17,7 +17,6 @@ module.exports = {
         type: Sequelize.STRING
       },
       userName: {
-        unique: true,
         allowNull: false,
         type: Sequelize.STRING
       },
@@ -31,7 +30,10 @@ module.exports = {
       },
       hashedPassword: {
         allowNull: false,
-        type: Sequelize.STRING
+        type: Sequelize.STRING(60).BINARY
+      },
+      tokenId: {
+        type: Sequelize.STRING(36),
       },
       createdAt: {
         allowNull: false,
