@@ -32,9 +32,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(60).BINARY
       },
-      tokenId: {
-        type: Sequelize.STRING(36),
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

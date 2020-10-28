@@ -1,63 +1,86 @@
 const express = require('express');
+const bcrypt = require('bcryptjs')
 const asyncHandler = require('express-async-handler');
-const { check, validationResult } = require('express-validator');
+const { check } = require('express-validator');
 const { User } = require('../../db/models')
-
-const UserRepository = require('../../db/user-repository');
-const { authenticated, generateToken } = require('./security-utils');
+const { getUserToken } = require("../../auth");
+// const { authenticated, generateToken } = require('./security-utils');
+const { handleValidationErrors } = require('./validations');
 
 const router = express.Router();
 
-const email =
+const userCreationValidators = [
   check('email')
     .isEmail()
     .withMessage('Please provide a valid email address')
-    .normalizeEmail();
-
-const firstName =
+    .normalizeEmail(),
   check('firstName')
     .not().isEmpty()
-    .withMessage('Please provide a first name')
-
-const lastName =
+    .withMessage('Please provide a first name'),
   check('lastName')
     .not().isEmpty()
-    .withMessage('Please provide a last name')
-
-const userName =
+    .withMessage('Please provide a last name'),
   check('userName')
     .not().isEmpty()
-    .withMessage('Please provide a username')
-
-const password =
+    .withMessage('Please provide a username'),
   check('password')
     .not().isEmpty()
     .withMessage('Please provide a password')
+]
 
-router.post('/', email, firstName, lastName, userName, password, asyncHandler(async function (req, res, next){
-  const errors = validationResult(req);
-  if(!errors.isEmpty()) {
-    return next({ status: 422, errors: errors.array() })
+//For when a new user is registered
+router.post("/", userCreationValidators, handleValidationErrors, asyncHandler(async(req, res) => {
+    const { firstName, lastName, userName, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ firstName, lastName, userName, email, hashedPassword })
+    const token = getUserToken(user) // Creates and attaches token to new user
+    res.status(201).json({
+      user: { id: user.id },
+      token,
+    });
+}));
 
-  }
+//Also for when a new user is registered? Better because checks password.
 
-  const user = await UserRepository.create(req.body);
-  // console.log("user here", user)
-  // const user = await User.build(req.body);
-  // user.setPassword(req.body.password);
+router.post("/token",
+  userCreationValidators,
+  check("confirmPassword")
+    .not().isEmpty()
+    .withMessage("Please confirm your password")
+    .custom((value, { req }) => value === req.body.password)
+    .withMessage("Password field does not match password."),
+  handleValidationErrors,
+  asyncHandler(async(req, res) => {
+    const {
+      userName,
+      firstName,
+      lastName,
+      email,
+      password,
+    } = req.body;
 
-  const {jti, token} = generateToken(user);
-  user.tokenId = jti;
-  await user.save();
-  await res.json({token, user: user.toSafeObject() })
-  // return resJson()
-}))
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.build(
+      {
+        firstName,
+        lastName,
+        userName,
+        email,
+        hashedPassword,
+      }
+      );
 
-router.get('/me', authenticated, function(req, res) {
-  res.json({
-    firstName: req.user.Name,
-    email: req.user.email,
-  });
-});
+    const token = await getUserToken(user);
+    user.tokenId = token;
+    await user.save();
+
+    res.status(201).json({
+      user: { id: user.id },
+      token
+    });
+  })
+);
+
+
 
 module.exports = router;

@@ -41,9 +41,6 @@ module.exports = (sequelize, DataTypes) => {
         len: [60, 60],
       },
     },
-    tokenId: {
-      type: DataTypes.STRING
-    }
   }, {});
 
   User.associate = function(models) {

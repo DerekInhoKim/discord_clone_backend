@@ -40,7 +40,7 @@ function restoreUser(req, res, next) {
       return next(e);
     }
 
-    if(!req.player.isValid()) {
+    if(!req.user.isValid()) {
       return next({ status: 404, message: 'session not found'})
     }
 
