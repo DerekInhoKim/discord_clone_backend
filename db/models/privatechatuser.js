@@ -5,7 +5,8 @@ module.exports = (sequelize, DataTypes) => {
     privateChatId: DataTypes.INTEGER
   }, {});
   PrivateChatUser.associate = function(models) {
-
+    PrivateChatUser.belongsTo(models.PrivateChat, {foreignKey: 'privateChatId'});
+    PrivateChatuser.belongsTo(models.User, {foreignKey: 'userId'});
   };
   return PrivateChatUser;
 };
