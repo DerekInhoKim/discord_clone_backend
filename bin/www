@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
+const { Channel } = require("../db/models");
 /**
  * Module dependencies.
  */
 
 const app = require('../app');
 const debug = require('debug')('discord-backend:server');
-const http = require('http');
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 
 /**
  * Get port from environment and store in Express.
@@ -19,17 +21,83 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-const server = http.createServer(app);
+io.on('connection', async (socket) => {
+  console.log(`${socket.id} -- Connected`);
+
+  // When we get a message on the 'join' room
+  // Get the channel from the database
+  // and then join the socket to the channel
+  // This makes it so that messages to this
+  // channel will flow back to the user's connection
+  socket.on('join', async (channelId) => {
+      const channel = await Channel.findByPk(channelId);
+      if (channel) {
+          socket.join(channel.id, async () => {
+              console.log(`${socket.id} has joined ${channel.channelName}`);
+          });
+      }
+  });
+
+  // When we get a message on the 'leave' room
+  // Get the channel from the database
+  // and then tell the socket we have left that
+  // channel
+  socket.on('leave', async (channelId) => {
+      console.log(channelId);
+      const channel = await Channel.findByPk(channelId);
+      if (channel) {
+          socket.leave(channel.id, async () => {
+              console.log(`${socket.id} has joined ${channel.channelName}`);
+          });
+      }
+  });
+
+  // When the socket disconnects, log something to the console.
+  socket.on('disconnect', () => {
+      console.log(`${socket.id} disconnected`);
+  });
+
+  // Find all the channels in the database
+  const channels = await Channel.findAll();
+
+  // Loop through all the channels and setup listeners
+  // to messages from all the channels.
+  for (let channel of channels) {
+      console.log(`listening for messages from ${channel.channelName}`);
+      // When we get a message for a channel
+      // 1. Log the message
+      // 2. add the new message to the database with the `addMessageToChannel`
+      //    helper function
+      // 3. Then emit the message to two places, back to the channel
+      //    and back to the socket that originally sent the message
+      //
+      // Note: socket.to only sends messages to OTHER sockets joined to
+      // the room. This is why we have to send the message back to the original
+      // socket as well.
+      socket.on(channel.id, async ({message, nickName}) => {
+          console.log(`${channel.name} -- ${nickName} ${message}`);
+          const newMessage = await addMessageToChannel(nickName, channel.id, message);
+          socket.to(channel.id).emit(channel.id, newMessage);
+          socket.emit(channel.id, newMessage);
+      });
+  }
+});
+
+// Listen on a port!
+const server = http.listen(port, function () {
+  console.log(`Server Listening on port ${port}`)
+});
+
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port, () => {
-  console.log(`Listening on ${port}`)
-});
-server.on('error', onError);
-server.on('listening', onListening);
+// server.listen(port, () => {
+//   console.log(`Listening on ${port}`)
+// });
+// server.on('error', onError);
+// server.on('listening', onListening);
 
 /**
  * Normalize a port into a number, string, or false.

@@ -5,6 +5,10 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors')
 
+// const http = require('http').createServer(app);
+// const io = require('socket.io')(http);
+
+
 const indexRouter = require('./routes/index');
 // const usersRouter = require('./routes/users');
 
