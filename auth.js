@@ -37,7 +37,7 @@ const restoreUser = (req, res, next) => {
       return next(err);
     }
 
-    console.log(jwtPayload.data)
+    // console.log(jwtPayload.data)
     const { id } = jwtPayload.data;
 
     try {

@@ -5,8 +5,6 @@ const { check } = require('express-validator');
 const { User, Server, ServerUser } = require('../../db/models')
 const { getUserToken, requireAuth } = require("../../auth");
 const { handleValidationErrors } = require('./validations');
-
-
 const router = express.Router();
 
 const userNotFoundError = (id) => {

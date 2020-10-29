@@ -63,30 +63,30 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.PrivateChatMessage, {foreignKey: 'userId'})
   };
 
-  // User.prototype.isValid = () => true
+  User.prototype.isValid = () => true
 
-  // User.prototype.setPassword = function(password) {
-  //   this.hashedPassword = bcrypt.hashSync(password);
-  //   return this;
+  User.prototype.setPassword = function(password) {
+    this.hashedPassword = bcrypt.hashSync(password);
+    return this;
 
-  // };
+  };
 
-  // User.prototype.isValidPassword = function (password) {
-  //   return bcrypt.compareSync(password, this.hashedPassword.toString());
+  User.prototype.isValidPassword = function (password) {
+    return bcrypt.compareSync(password, this.hashedPassword.toString());
 
-  // }
+  }
 
-  // User.prototype.toSafeObject = function () {
-  //   return {
-  //     id: this.id,
-  //     firstName: this.firstName,
-  //     lastName: this.lastName,
-  //     userName: this.userName,
-  //     status: this.status,
-  //     email: this.email,
-  //     createdAt: this.createdAt,
-  //     updatedAt: this.updatedAt
-  //   }
-  // }
+  User.prototype.toSafeObject = function () {
+    return {
+      id: this.id,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      userName: this.userName,
+      status: this.status,
+      email: this.email,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
+    }
+  }
   return User;
 };
