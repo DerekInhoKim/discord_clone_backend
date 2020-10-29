@@ -2,12 +2,20 @@ const express = require('express');
 const bcrypt = require('bcryptjs')
 const asyncHandler = require('express-async-handler');
 const { check } = require('express-validator');
-const { User } = require('../../db/models')
-const { getUserToken } = require("../../auth");
-// const { authenticated, generateToken } = require('./security-utils');
+const { User, Server, ServerUser } = require('../../db/models')
+const { getUserToken, requireAuth } = require("../../auth");
 const { handleValidationErrors } = require('./validations');
 
+
 const router = express.Router();
+
+const userNotFoundError = (id) => {
+  const err = Error('User not found');
+  err.errors = [`User with the id of ${id} could not be found`];
+  err.title = 'User not found';
+  err.status = 404;
+  return err;
+};
 
 const userCreationValidators = [
   check('email')
@@ -25,32 +33,17 @@ const userCreationValidators = [
     .withMessage('Please provide a username'),
   check('password')
     .not().isEmpty()
-    .withMessage('Please provide a password')
-]
-
-//For when a new user is registered
-router.post("/", userCreationValidators, handleValidationErrors, asyncHandler(async(req, res) => {
-    const { firstName, lastName, userName, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ firstName, lastName, userName, email, hashedPassword })
-    const token = getUserToken(user) // Creates and attaches token to new user
-    res.status(201).json({
-      user: { id: user.id },
-      token,
-    });
-}));
-
-//Also for when a new user is registered? Better because checks password.
-
-router.post("/token",
-  userCreationValidators,
+    .withMessage('Please provide a password'),
   check("confirmPassword")
     .not().isEmpty()
     .withMessage("Please confirm your password")
     .custom((value, { req }) => value === req.body.password)
     .withMessage("Password field does not match password."),
-  handleValidationErrors,
-  asyncHandler(async(req, res) => {
+]
+
+
+//Creates a new user in the database after validations.
+router.post("/", userCreationValidators, handleValidationErrors ,asyncHandler(async(req, res) => {
     const {
       userName,
       firstName,
@@ -74,12 +67,39 @@ router.post("/token",
     user.tokenId = token;
     await user.save();
 
-    res.status(201).json({
-      user: { id: user.id },
-      token
-    });
+    res.status(201).json({ user: { id: user.id }, token });
   })
 );
+
+//Return information for a user with id
+router.get('/:id(\\d+)', requireAuth, asyncHandler( async (req, res) => {
+  const user = await User.findByPk(req.params.id)
+  res.json({user})
+
+}))
+
+//Removes a user from the database with the appropriate id
+router.delete('/:id(\\d+)', requireAuth ,asyncHandler (async (req, res) => {
+  const user = await User.findByPk(req.params.id)
+
+  if(user){
+    await user.destroy()
+    res.json({message: `User id = ${req.params.id} has been deleted!`})
+  } else {
+    next(userNotFoundError(req.params.id))
+  }
+}))
+
+//Return all servers that a user belongs to
+router.get('/:id(\\d+)/servers', requireAuth, asyncHandler (async (req, res) => {
+  const servers = await ServerUser.findAll({where: {
+    userId: req.params.id
+  }, include: Server
+  })
+
+  res.json({servers})
+
+}))
 
 
 

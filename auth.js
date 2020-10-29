@@ -54,43 +54,6 @@ const restoreUser = (req, res, next) => {
   });
 };
 
-// const restoreUser = (req, res, next) => {
-//   const { token } = req;
-//   if (!token && ( req.path == '/sign-in' || req.path == '/register' ) ) {
-//     return next();
-//   };
-
-//   if (!token) {
-//     return res.redirect('/sign-in');
-//   }
-
-//   return jwt.verify(token, secret, null, async (error, jwtPayload) => {
-
-//     if (error) {
-//       error.status = 401;
-//       return next(error);
-//     }
-
-//     if (token && (req.path == "/register" || req.path == "/sign-in")) {
-//       return res.redirect('/');
-//     }
-
-//     const { id } = jwtPayload.data;
-
-//     try {
-//       req.user = await User.findByPk(id);
-//     } catch (error) {
-//       return next(error);
-//     }
-
-//     if (!req.user) {
-//       return res.set("WWW-Authenticate", "Bearer").status(401).end();
-//     }
-
-//     return next();
-//   });
-// };
-
 
 const requireAuth = [bearerToken(), restoreUser]
 

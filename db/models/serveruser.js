@@ -5,7 +5,8 @@ module.exports = (sequelize, DataTypes) => {
     serverId: DataTypes.INTEGER
   }, {});
   ServerUser.associate = function(models) {
-    // associations can be defined here
+    ServerUser.belongsTo(models.User, {foreignKey: 'userId'}),
+    ServerUser.belongsTo(models.Server, {foreignKey: 'serverId'})
   };
   return ServerUser;
 };

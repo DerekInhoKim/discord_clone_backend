@@ -1,49 +1,61 @@
 const express = require('express');
 const asyncHandler = require('express-async-handler');
 const { check } = require('express-validator');
-
-
-const UserRepository = require('../../db/user-repository');
-const { authenticated, generateToken } = require('./security-utils');
+const { User } = require('../../db/models')
+const {requireAuth } = require('../../auth')
 const { handleValidationErrors } = require('./validations');
 
 const router = express.Router();
 
 
-const updateUserValidators = [
-  check('email')
+const sharedAuthValidations = [
+  check("email")
+    .exists({ checkFalsy: true })
     .isEmail()
-    .withMessage('Please provide a valid email address')
-    .normalizeEmail(),
-  check('firstName')
-    .not().isEmpty()
-    .withMessage('Please provide a first name'),
-  check('lastName')
-    .not().isEmpty()
-    .withMessage('Please provide a last name'),
-  check('userName')
-    .not().isEmpty()
-    .withMessage('Please provide a username'),
-  check('password')
-    .not().isEmpty()
-    .withMessage('Please provide a password')
-]
+    .withMessage("A valid email address is required")
+    .isLength({ max: 100 })
+    .withMessage("Email address must be less than 100 characters"),
+  check("password")
+    .exists({ checkFalsy: true })
+    .withMessage("User password is required"),
+];
 
-router.put('/', updateUserValidators, handleValidationErrors ,asyncHandler( async (req, res, next) => {
-  const {email} = req.body;
-  const user = await UserRepository.findByEmail(email);
+//For user login
+router.put("/", sharedAuthValidations, handleValidationErrors ,asyncHandler(async(req, res, next) => {
+    const { email, password } = req.body;
+    const user = await User.findOne(
+      {
+        where: { email }
+      }
+    );
 
-  const {jti, token} = generateToken(user)
-  user.tokenId = jti;
-  await user.save();
-  res.json({ token, user: user.toSafeObject() })
+    if (!user || !user.isValidPassword(password)) {
+      const error = new Error("Invalid credentials");
+      error.status = 401;
+      error.title = "Invalid credentials";
+      error.errors = ["Unable to authenticate provided information. Please check user name and/or password."];
+      return next(error);
+    }
 
-}))
+    const token = getUserToken(user);
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        userName: user.userName,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        status: user.status,
+        email: user.email
+      }
+    });
+  })
+);
 
-router.delete('/', [authenticated], asyncHandler(async (req, res) => {
+router.delete('/', requireAuth, asyncHandler(async (req, res) => {
   req.user.tokenId = null;
   await req.user.save();
-  req.json({message: 'user has been successfully deleted'})
+  res.json({message: 'user has been successfully deleted'})
 
 }))
 
