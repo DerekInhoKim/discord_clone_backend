@@ -91,7 +91,7 @@ router.delete('/:id(\\d+)', requireAuth ,asyncHandler (async (req, res) => {
 }))
 
 //Return all servers that a user belongs to
-router.get('/:id(\\d+)/servers', requireAuth, asyncHandler (async (req, res) => {
+router.get('/:id(\\d+)/servers', requireAuth, asyncHandler( async(req, res) => {
   const servers = await ServerUser.findAll({where: {
     userId: req.params.id
   }, include: Server
@@ -101,6 +101,17 @@ router.get('/:id(\\d+)/servers', requireAuth, asyncHandler (async (req, res) => 
 
 }))
 
+const serverNameValidator = [
+  check('serverName')
+    .not().isEmpty()
+    .withMessage('Please provide a server name'),
+]
+
+router.post('/:id(\\d+)/servers', requireAuth, serverNameValidator, handleValidationErrors, asyncHandler( async(req, res) => {
+  const { serverName } = req.body
+  const server = await Server.create({ serverName })
+  res.status(201).json({ server })
+}))
 
 
 module.exports = router;
