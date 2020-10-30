@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 const { Channel } = require("../db/models");
+const { addMessageToChannel } = require('../routes/utils')
+
 /**
  * Module dependencies.
  */
@@ -22,6 +24,7 @@ app.set('port', port);
  */
 
 io.on('connection', async (socket) => {
+
   console.log(`${socket.id} -- Connected`);
 
   // When we get a message on the 'join' room
@@ -59,6 +62,7 @@ io.on('connection', async (socket) => {
 
   // Find all the channels in the database
   const channels = await Channel.findAll();
+  // console.log(channels[0].channel.id)
 
   // Loop through all the channels and setup listeners
   // to messages from all the channels.
@@ -74,9 +78,11 @@ io.on('connection', async (socket) => {
       // Note: socket.to only sends messages to OTHER sockets joined to
       // the room. This is why we have to send the message back to the original
       // socket as well.
-      socket.on(channel.id, async ({message, nickName}) => {
-          console.log(`${channel.name} -- ${nickName} ${message}`);
-          const newMessage = await addMessageToChannel(nickName, channel.id, message);
+      socket.on(channel.id, async ({message, userName}) => {
+          // console.log("ADDMESSAGETOCHANNEL", addMessageToChannel)
+          console.log(`${channel.channelName} -- ${userName} ${message}`);
+          const newMessage = await addMessageToChannel(userName, channel.id, message);
+          console.log("NEWMESSAGE", newMessage)
           socket.to(channel.id).emit(channel.id, newMessage);
           socket.emit(channel.id, newMessage);
       });
