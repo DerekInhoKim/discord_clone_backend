@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
 const { requireAuth } = require('../../auth');
-const { Channel, Message } = require('../../db/models');
+const { Channel, Message, User } = require('../../db/models');
 
 router.use(requireAuth)
 
@@ -17,7 +17,7 @@ router.get('/:id(\\d+)', asyncHandler(async (req, res) => {
 router.get('/:id(\\d+)/messages', asyncHandler( async (req, res ) => {
   const channelId = req.params.id
   const channel = await Channel.findByPk(channelId, {
-    include: Message
+    include: {model: Message, include: User}
   })
 
   res.json(channel)

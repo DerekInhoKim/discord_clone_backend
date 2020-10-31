@@ -72,7 +72,7 @@ router.post("/", userCreationValidators, handleValidationErrors ,asyncHandler(as
 //Return information for a user with id
 router.get('/:id(\\d+)', requireAuth, asyncHandler( async (req, res) => {
   const user = await User.findByPk(req.params.id)
-  res.json({user})
+  res.json(user)
 
 }))
 

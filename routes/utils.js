@@ -10,7 +10,6 @@ const addMessageToChannel = async (userName, channelId, messageContent) => {
         userName: userName
       }
     })
-    console.log("USER", user)
     const userId = user.id
     const message = await Message.create({
       message: messageContent,
@@ -19,6 +18,7 @@ const addMessageToChannel = async (userName, channelId, messageContent) => {
     });
     message.setChannel(channel);
     await message.save();
+
     // console.log('MESSAGEHERE',message)
     return message
   } catch (e) {
