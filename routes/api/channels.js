@@ -14,10 +14,12 @@ router.get('/:id(\\d+)', asyncHandler(async (req, res) => {
   res.json({channel})
 }))
 
+//Returns all messages for a requested channel
+//api/channels/channelId/messages
 router.get('/:id(\\d+)/messages', asyncHandler( async (req, res ) => {
   const channelId = req.params.id
   const channel = await Channel.findByPk(channelId, {
-    include: {model: Message, include: User}
+    include: Message
   })
 
   res.json(channel)

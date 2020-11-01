@@ -82,7 +82,7 @@ io.on('connection', async (socket) => {
           // console.log("ADDMESSAGETOCHANNEL", addMessageToChannel)
           console.log(`${channel.channelName} -- ${userName} ${message}`);
           const newMessage = await addMessageToChannel(userName, channel.id, message);
-          console.log("NEWMESSAGE", newMessage)
+          // console.log("NEWMESSAGE", newMessage)
           socket.to(channel.id).emit(channel.id, newMessage);
           socket.emit(channel.id, newMessage);
       });
