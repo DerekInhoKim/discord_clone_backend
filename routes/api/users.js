@@ -95,7 +95,7 @@ router.get('/:id(\\d+)/servers', requireAuth, asyncHandler( async(req, res) => {
   }, include: Server
   })
 
-  res.json({servers})
+  res.json(servers)
 
 }))
 
